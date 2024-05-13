@@ -63,5 +63,5 @@ jobs:
       - name: Fail the workflow run
         run: |
           # Fail the workflow run
-          echo 'This pull request modifies a third party library file. These changes need to be proposed and merged into the upstream projects before being included in WordPress.'
+          echo 'This pull request modifies a third party library file. These changes need to be proposed and merged into the upstream projects before being included in WordPress.' >&2
           exit 1
