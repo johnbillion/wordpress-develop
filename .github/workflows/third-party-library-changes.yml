@@ -4,12 +4,10 @@ on:
   pull_request:
     paths:
       - 'src/wp-includes/ID3/**'
-      - 'src/wp-includes/IXR/**'
       - 'src/wp-includes/PHPMailer/**'
       - 'src/wp-includes/Requests/**'
       - 'src/wp-includes/SimplePie/**'
       - 'src/wp-includes/sodium_compat/**'
-      - 'src/wp-includes/Text/**'
 
 # Disable permissions for all available scopes by default.
 # Any needed permissions should be configured at the job level.
@@ -48,13 +46,11 @@ jobs:
               body: `## :x: Third Party Files
             This pull request modifies a third party library file. Changes to files in the following directories should be made to their respective upstream projects instead:
 
-            - \`src/wp-includes/ID3\`: [ID3](https://example.com)
-            - \`src/wp-includes/IXR\`: [IXR](https://example.com)
-            - \`src/wp-includes/PHPMailer\`: [PHPMailer](https://example.com)
-            - \`src/wp-includes/Requests\`: [Requests](https://example.com)
-            - \`src/wp-includes/SimplePie\`: [SimplePie](https://example.com)
-            - \`src/wp-includes/sodium_compat\`: [Sodium Compat](https://example.com)
-            - \`src/wp-includes/Text\`: [Text](https://example.com)
+            - \`src/wp-includes/ID3\`: [ID3](https://github.com/JamesHeinrich/getID3)
+            - \`src/wp-includes/PHPMailer\`: [PHPMailer](https://github.com/PHPMailer/PHPMailer)
+            - \`src/wp-includes/Requests\`: [Requests](https://github.com/WordPress/Requests)
+            - \`src/wp-includes/SimplePie\`: [SimplePie](https://github.com/simplepie/simplepie)
+            - \`src/wp-includes/sodium_compat\`: [Sodium Compat](https://github.com/paragonie/sodium_compat)
 
             These changes need to be proposed and merged into the upstream projects before being included in WordPress.
               `,
