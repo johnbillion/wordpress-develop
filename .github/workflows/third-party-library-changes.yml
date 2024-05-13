@@ -59,3 +59,8 @@ jobs:
             These changes need to be proposed and merged into the upstream projects before being included in WordPress.
               `,
             } );
+
+      - name: Fail the workflow run
+        run: |
+          echo 'This pull request modifies a third party library file. These changes need to be proposed and merged into the upstream projects before being included in WordPress.'
+          exit 1
