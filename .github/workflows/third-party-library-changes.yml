@@ -32,7 +32,7 @@ jobs:
             const { number } = context.issue;
 
             // Check for the presence of a review and bail early.
-            const reviews = ( await github.rest.pulls.listReviews( { owner, repo, issue_number: number } ) ).data;
+            const reviews = ( await github.rest.pulls.listReviews( { owner, repo, pull_number: number } ) ).data;
 
             const hasReview = reviews.some( comment =>
               comment.user.type === 'Bot' && comment.body.includes( 'Third Party Files' )
