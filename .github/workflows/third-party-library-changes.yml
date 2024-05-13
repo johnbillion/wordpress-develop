@@ -18,33 +18,34 @@ permissions: {}
 jobs:
   third-party-changed-files:
     runs-on: ubuntu-latest
-    name: Get third party library modified files
+    name: Check third party libraries
     permissions:
       issues: write
       pull-requests: write
     if: ${{ github.repository == 'johnbillion/wordpress-develop' }}
     steps:
-      - name: Leave a comment about third party libraries
+      - name: Leave a review about third party libraries
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           script: |
             const { owner, repo } = context.repo;
             const { number } = context.issue;
 
-            // Check for the presence of a comment and bail early.
-            const comments = ( await github.rest.issues.listComments( { owner, repo, issue_number: number } ) ).data;
+            // Check for the presence of a review and bail early.
+            const reviews = ( await github.rest.pulls.listReviews( { owner, repo, issue_number: number } ) ).data;
 
-            const hasComment = comments.some( comment =>
+            const hasReview = reviews.some( comment =>
               comment.user.type === 'Bot' && comment.body.includes( 'Third Party Files' )
             );
 
-            if ( hasComment ) return;
+            if ( hasReview ) return;
 
-            github.rest.issues.createComment( {
+            github.rest.pulls.createReview( {
               owner,
               repo,
-              issue_number: number,
-              body: `## Third Party Files
+              pull_number: number,
+              event: 'REQUEST_CHANGES',
+              body: `## :x: Third Party Files
             This pull request modifies a third party library file. Changes to files in the following directories should be made to their respective upstream projects instead:
 
             - \`src/wp-includes/ID3\`: [ID3](https://example.com)
@@ -58,6 +59,3 @@ jobs:
             These changes need to be proposed and merged into the upstream projects before being included in WordPress.
               `,
             } );
-
-      - name: Fail the workflow run
-        run: exit 1
