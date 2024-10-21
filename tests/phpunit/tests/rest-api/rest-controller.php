@@ -4,12 +4,15 @@
  *
  * @package WordPress
  * @subpackage REST API
- */
-
-/**
+ *
  * @group restapi
  */
 class WP_Test_REST_Controller extends WP_Test_REST_TestCase {
+
+	/**
+	 * @var WP_REST_Request
+	 */
+	private $request;
 
 	public static function wpSetUpBeforeClass( WP_UnitTest_Factory $factory ) {
 		// Load the WP_REST_Test_Controller class if not already loaded.
@@ -23,34 +26,42 @@ class WP_Test_REST_Controller extends WP_Test_REST_TestCase {
 			'/wp/v2/testroute',
 			array(
 				'args' => array(
-					'someinteger' => array(
+					'someinteger'       => array(
 						'type' => 'integer',
 					),
-					'someboolean' => array(
+					'someboolean'       => array(
 						'type' => 'boolean',
 					),
-					'somestring'  => array(
+					'somestring'        => array(
 						'type' => 'string',
 					),
-					'somehex'     => array(
+					'somehex'           => array(
 						'type'   => 'string',
 						'format' => 'hex-color',
 					),
-					'someenum'    => array(
+					'someenum'          => array(
 						'type' => 'string',
 						'enum' => array( 'a' ),
 					),
-					'somedate'    => array(
+					'somedate'          => array(
 						'type'   => 'string',
 						'format' => 'date-time',
 					),
-					'someemail'   => array(
+					'someemail'         => array(
 						'type'   => 'string',
 						'format' => 'email',
 					),
-					'someuuid'    => array(
+					'someuuid'          => array(
 						'type'   => 'string',
 						'format' => 'uuid',
+					),
+					'sometextfield'     => array(
+						'type'   => 'string',
+						'format' => 'text-field',
+					),
+					'sometextareafield' => array(
+						'type'   => 'string',
+						'format' => 'textarea-field',
 					),
 				),
 			)
@@ -220,6 +231,52 @@ class WP_Test_REST_Controller extends WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * @ticket 49960
+	 */
+	public function test_validate_schema_format_text_field() {
+		$this->assertTrue(
+			rest_validate_request_arg( 'Hello World', $this->request, 'sometextfield' )
+		);
+
+		$this->assertErrorResponse(
+			'rest_invalid_type',
+			rest_validate_request_arg( false, $this->request, 'sometextfield' )
+		);
+
+		$this->assertSame(
+			'Hello World',
+			rest_sanitize_request_arg( 'Hello World', $this->request, 'sometextfield' )
+		);
+		$this->assertSame(
+			'Hello World',
+			rest_sanitize_request_arg( '<p>Hello World</p>', $this->request, 'sometextfield' )
+		);
+	}
+
+	/**
+	 * @ticket 49960
+	 */
+	public function test_validate_schema_format_textarea_field() {
+		$this->assertTrue(
+			rest_validate_request_arg( "Hello\nWorld", $this->request, 'sometextareafield' )
+		);
+
+		$this->assertErrorResponse(
+			'rest_invalid_type',
+			rest_validate_request_arg( false, $this->request, 'sometextareafield' )
+		);
+
+		$this->assertSame(
+			"Hello\nWorld",
+			rest_sanitize_request_arg( "Hello\nWorld", $this->request, 'sometextareafield' )
+		);
+		$this->assertSame(
+			"Hello\nWorld",
+			rest_sanitize_request_arg( "<p>Hello\nWorld</p>", $this->request, 'sometextareafield' )
+		);
+	}
+
+	/**
 	 * @ticket 50876
 	 */
 	public function test_get_endpoint_args_for_item_schema() {
@@ -234,6 +291,8 @@ class WP_Test_REST_Controller extends WP_Test_REST_TestCase {
 		$this->assertArrayHasKey( 'someemail', $args );
 		$this->assertArrayHasKey( 'somehex', $args );
 		$this->assertArrayHasKey( 'someuuid', $args );
+		$this->assertArrayHasKey( 'sometextfield', $args );
+		$this->assertArrayHasKey( 'sometextareafield', $args );
 		$this->assertArrayHasKey( 'someenum', $args );
 		$this->assertArrayHasKey( 'someargoptions', $args );
 		$this->assertArrayHasKey( 'somedefault', $args );
@@ -303,7 +362,6 @@ class WP_Test_REST_Controller extends WP_Test_REST_TestCase {
 
 		// Ignored properties.
 		$this->assertArrayNotHasKey( 'ignored_prop', $args['someobject'] );
-
 	}
 
 	/**
@@ -323,11 +381,14 @@ class WP_Test_REST_Controller extends WP_Test_REST_TestCase {
 				'someemail',
 				'somehex',
 				'someuuid',
+				'sometextfield',
+				'sometextareafield',
 				'someenum',
 				'someargoptions',
 				'somedefault',
 				'somearray',
 				'someobject',
+				'_links',
 			),
 			$fields
 		);
@@ -356,14 +417,28 @@ class WP_Test_REST_Controller extends WP_Test_REST_TestCase {
 					'someemail',
 					'somehex',
 					'someuuid',
+					'sometextfield',
+					'sometextareafield',
 					'someenum',
 					'someargoptions',
 					'somedefault',
 					'somearray',
 					'someobject',
+					'_links',
 				),
 			),
 		);
+	}
+
+	public function test_get_fields_for_response_respects_embed() {
+		$controller = new WP_REST_Test_Controller();
+		$request    = new WP_REST_Request( 'GET', '/wp/v2/testroute' );
+
+		$this->assertNotContains( '_embedded', $controller->get_fields_for_response( $request ) );
+
+		$request->set_param( '_embed', 1 );
+
+		$this->assertContains( '_embedded', $controller->get_fields_for_response( $request ) );
 	}
 
 	public function test_get_fields_for_response_filters_by_context() {

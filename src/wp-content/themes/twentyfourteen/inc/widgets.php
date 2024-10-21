@@ -10,7 +10,6 @@
  * @subpackage Twenty_Fourteen
  * @since Twenty Fourteen 1.0
  */
-
 class Twenty_Fourteen_Ephemera_Widget extends WP_Widget {
 
 	/**
@@ -269,7 +268,7 @@ class Twenty_Fourteen_Ephemera_Widget extends WP_Widget {
 	 * @param array $old_instance Original widget instance.
 	 * @return array Updated widget instance.
 	 */
-	function update( $new_instance, $old_instance ) {
+	public function update( $new_instance, $old_instance ) {
 		$old_instance['title']  = strip_tags( $new_instance['title'] );
 		$old_instance['number'] = empty( $new_instance['number'] ) ? 2 : absint( $new_instance['number'] );
 
@@ -287,7 +286,7 @@ class Twenty_Fourteen_Ephemera_Widget extends WP_Widget {
 	 *
 	 * @param array $instance
 	 */
-	function form( $instance ) {
+	public function form( $instance ) {
 		$title  = ! empty( $instance['title'] ) ? esc_attr( $instance['title'] ) : '';
 		$number = ! empty( $instance['number'] ) ? absint( $instance['number'] ) : 2;
 		$format = isset( $instance['format'] ) ? $instance['format'] : '';

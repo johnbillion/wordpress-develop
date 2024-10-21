@@ -5,15 +5,12 @@
  * @package WordPress
  * @subpackage REST_API
  * @since 5.8.0
- */
-
-/**
- * Tests for REST API for Widgets.
+ *
+ * @covers WP_REST_Sidebars_Controller
  *
  * @see WP_Test_REST_Controller_Testcase
  * @group restapi
  * @group widgets
- * @covers WP_REST_Sidebars_Controller
  */
 class WP_Test_REST_Sidebars_Controller extends WP_Test_REST_Controller_Testcase {
 
@@ -46,8 +43,8 @@ class WP_Test_REST_Sidebars_Controller extends WP_Test_REST_Controller_Testcase 
 	}
 
 	public static function wpTearDownAfterClass() {
-		wp_delete_user( self::$admin_id );
-		wp_delete_user( self::$author_id );
+		self::delete_user( self::$admin_id );
+		self::delete_user( self::$author_id );
 	}
 
 	public function set_up() {
@@ -165,6 +162,102 @@ class WP_Test_REST_Sidebars_Controller extends WP_Test_REST_Controller_Testcase 
 	}
 
 	/**
+	 * @ticket 53915
+	 */
+	public function test_get_items_no_permission_show_in_rest() {
+		$this->setup_sidebar(
+			'sidebar-1',
+			array(
+				'name'         => 'Test sidebar',
+				'show_in_rest' => true,
+			)
+		);
+		wp_set_current_user( 0 );
+		$request  = new WP_REST_Request( 'GET', '/wp/v2/sidebars' );
+		$response = rest_get_server()->dispatch( $request );
+		$data     = $response->get_data();
+		$data     = $this->remove_links( $data );
+		$this->assertSame(
+			array(
+				array(
+					'id'            => 'sidebar-1',
+					'name'          => 'Test sidebar',
+					'description'   => '',
+					'class'         => '',
+					'before_widget' => '',
+					'after_widget'  => '',
+					'before_title'  => '',
+					'after_title'   => '',
+					'status'        => 'active',
+					'widgets'       => array(),
+				),
+			),
+			$data
+		);
+	}
+
+	/**
+	 * @ticket 53915
+	 */
+	public function test_get_items_without_show_in_rest_are_removed_from_the_list() {
+		$this->setup_sidebar(
+			'sidebar-1',
+			array(
+				'name'         => 'Test sidebar 1',
+				'show_in_rest' => true,
+			)
+		);
+		$this->setup_sidebar(
+			'sidebar-2',
+			array(
+				'name'         => 'Test sidebar 2',
+				'show_in_rest' => false,
+			)
+		);
+		$this->setup_sidebar(
+			'sidebar-3',
+			array(
+				'name'         => 'Test sidebar 3',
+				'show_in_rest' => true,
+			)
+		);
+		wp_set_current_user( self::$author_id );
+		$request  = new WP_REST_Request( 'GET', '/wp/v2/sidebars' );
+		$response = rest_get_server()->dispatch( $request );
+		$data     = $response->get_data();
+		$data     = $this->remove_links( $data );
+		$this->assertSame(
+			array(
+				array(
+					'id'            => 'sidebar-1',
+					'name'          => 'Test sidebar 1',
+					'description'   => '',
+					'class'         => '',
+					'before_widget' => '',
+					'after_widget'  => '',
+					'before_title'  => '',
+					'after_title'   => '',
+					'status'        => 'active',
+					'widgets'       => array(),
+				),
+				array(
+					'id'            => 'sidebar-3',
+					'name'          => 'Test sidebar 3',
+					'description'   => '',
+					'class'         => '',
+					'before_widget' => '',
+					'after_widget'  => '',
+					'before_title'  => '',
+					'after_title'   => '',
+					'status'        => 'active',
+					'widgets'       => array(),
+				),
+			),
+			$data
+		);
+	}
+
+	/**
 	 * @ticket 41683
 	 */
 	public function test_get_items_wrong_permission_author() {
@@ -191,6 +284,18 @@ class WP_Test_REST_Sidebars_Controller extends WP_Test_REST_Controller_Testcase 
 		$data     = $this->remove_links( $data );
 		$this->assertSame(
 			array(
+				array(
+					'id'            => 'wp_inactive_widgets',
+					'name'          => 'Inactive widgets',
+					'description'   => '',
+					'class'         => '',
+					'before_widget' => '',
+					'after_widget'  => '',
+					'before_title'  => '',
+					'after_title'   => '',
+					'status'        => 'inactive',
+					'widgets'       => array(),
+				),
 				array(
 					'id'            => 'sidebar-1',
 					'name'          => 'Test sidebar',
@@ -415,6 +520,40 @@ class WP_Test_REST_Sidebars_Controller extends WP_Test_REST_Controller_Testcase 
 	/**
 	 * @ticket 41683
 	 */
+	public function test_get_item_no_permission_public() {
+		wp_set_current_user( 0 );
+		$this->setup_sidebar(
+			'sidebar-1',
+			array(
+				'name'         => 'Test sidebar',
+				'show_in_rest' => true,
+			)
+		);
+
+		$request  = new WP_REST_Request( 'GET', '/wp/v2/sidebars/sidebar-1' );
+		$response = rest_get_server()->dispatch( $request );
+		$data     = $response->get_data();
+		$data     = $this->remove_links( $data );
+		$this->assertSame(
+			array(
+				'id'            => 'sidebar-1',
+				'name'          => 'Test sidebar',
+				'description'   => '',
+				'class'         => '',
+				'before_widget' => '',
+				'after_widget'  => '',
+				'before_title'  => '',
+				'after_title'   => '',
+				'status'        => 'active',
+				'widgets'       => array(),
+			),
+			$data
+		);
+	}
+
+	/**
+	 * @ticket 41683
+	 */
 	public function test_get_item_wrong_permission_author() {
 		wp_set_current_user( self::$author_id );
 		$this->setup_sidebar(
@@ -430,9 +569,12 @@ class WP_Test_REST_Sidebars_Controller extends WP_Test_REST_Controller_Testcase 
 	}
 
 	/**
-	 * The test_create_item() method does not exist for sidebar.
+	 * The create_item() method does not exist for sidebar.
+	 *
+	 * @doesNotPerformAssertions
 	 */
 	public function test_create_item() {
+		// Controller does not implement create_item().
 	}
 
 	/**
@@ -715,6 +857,73 @@ class WP_Test_REST_Sidebars_Controller extends WP_Test_REST_Controller_Testcase 
 	}
 
 	/**
+	 * @ticket 57531
+	 * @covers WP_Test_REST_Sidebars_Controller::prepare_item_for_response
+	 */
+	public function test_prepare_item_for_response_to_set_inactive_on_theme_switch() {
+		$request = new WP_REST_Request( 'GET', '/wp/v2/sidebars/sidebar-1' );
+
+		// Set up the test.
+		wp_widgets_init();
+		$this->setup_widget(
+			'widget_rss',
+			1,
+			array(
+				'title' => 'RSS test',
+			)
+		);
+		$this->setup_widget(
+			'widget_text',
+			1,
+			array(
+				'text' => 'Custom text test',
+			)
+		);
+		$this->setup_sidebar(
+			'sidebar-1',
+			array(
+				'name' => 'Sidebar 1',
+			),
+			array( 'text-1', 'rss-1' )
+		);
+
+		// Validate the state before a theme switch.
+		$response = rest_get_server()->dispatch( $request );
+		$data     = $response->get_data();
+		$data     = $this->remove_links( $data );
+
+		$this->assertSame( 'active', $data['status'] );
+		$this->assertFalse(
+			get_theme_mod( 'wp_classic_sidebars' ),
+			'wp_classic_sidebars theme mod should not exist before switching to block theme'
+		);
+
+		switch_theme( 'block-theme' );
+		wp_widgets_init();
+
+		// Validate the state after a theme switch.
+		$response = rest_get_server()->dispatch( $request );
+		$data     = $response->get_data();
+		$data     = $this->remove_links( $data );
+
+		$this->assertSame(
+			'inactive',
+			$data['status'],
+			'Sidebar status should have changed to inactive'
+		);
+		$this->assertSame(
+			array( 'text-1', 'rss-1' ),
+			$data['widgets'],
+			'The text and rss widgets should still in sidebar-1'
+		);
+		$this->assertArrayHasKey(
+			'sidebar-1',
+			get_theme_mod( 'wp_classic_sidebars' ),
+			'sidebar-1 should be in "wp_classic_sidebars" theme mod'
+		);
+	}
+
+	/**
 	 * @ticket 41683
 	 */
 	public function test_update_item_no_permission() {
@@ -747,15 +956,21 @@ class WP_Test_REST_Sidebars_Controller extends WP_Test_REST_Controller_Testcase 
 	}
 
 	/**
-	 * The test_delete_item() method does not exist for sidebar.
+	 * The delete_item() method does not exist for sidebar.
+	 *
+	 * @doesNotPerformAssertions
 	 */
 	public function test_delete_item() {
+		// Controller does not implement delete_item().
 	}
 
 	/**
-	 * The test_prepare_item() method does not exist for sidebar.
+	 * The prepare_item() method does not exist for sidebar.
+	 *
+	 * @doesNotPerformAssertions
 	 */
 	public function test_prepare_item() {
+		// Controller does not implement prepare_item().
 	}
 
 	/**
@@ -797,7 +1012,7 @@ class WP_Test_REST_Sidebars_Controller extends WP_Test_REST_Controller_Testcase 
 			if ( isset( $item['_links'] ) ) {
 				unset( $data[ $count ]['_links'] );
 			}
-			$count ++;
+			++$count;
 		}
 
 		return $data;

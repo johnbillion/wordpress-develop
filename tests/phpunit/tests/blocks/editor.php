@@ -1,15 +1,9 @@
 <?php
 /**
- * Block editor tests
+ * Tests for the block editor methods.
  *
  * @package WordPress
  * @subpackage Blocks
- * @since 5.5.0
- */
-
-/**
- * Tests for the block editor methods.
- *
  * @since 5.5.0
  *
  * @group blocks
@@ -24,25 +18,32 @@ class Tests_Blocks_Editor extends WP_UnitTestCase {
 
 		parent::set_up();
 
+		remove_action( 'wp_print_styles', 'print_emoji_styles' );
+
 		$args = array(
 			'post_title' => 'Example',
 		);
 
-		$post = $this->factory()->post->create_and_get( $args );
+		$post = self::factory()->post->create_and_get( $args );
 
 		global $wp_rest_server;
-		$wp_rest_server = new Spy_REST_Server;
+		$wp_rest_server = new Spy_REST_Server();
 		do_action( 'rest_api_init', $wp_rest_server );
+
+		global $post_ID;
+		$post_ID = 1;
 	}
 
 	public function tear_down() {
 		/** @var WP_REST_Server $wp_rest_server */
 		global $wp_rest_server;
 		$wp_rest_server = null;
+		global $post_ID;
+		$post_ID = null;
 		parent::tear_down();
 	}
 
-	function filter_set_block_categories_post( $block_categories, $post ) {
+	public function filter_set_block_categories_post( $block_categories, $post ) {
 		if ( empty( $post ) ) {
 			return $block_categories;
 		}
@@ -56,7 +57,7 @@ class Tests_Blocks_Editor extends WP_UnitTestCase {
 		);
 	}
 
-	function filter_set_allowed_block_types_post( $allowed_block_types, $post ) {
+	public function filter_set_allowed_block_types_post( $allowed_block_types, $post ) {
 		if ( empty( $post ) ) {
 			return $allowed_block_types;
 		}
@@ -64,9 +65,9 @@ class Tests_Blocks_Editor extends WP_UnitTestCase {
 		return array( 'test/filtered-block' );
 	}
 
-	function filter_set_block_editor_settings_post( $editor_settings, $post ) {
+	public function filter_set_block_editor_settings_post( $editor_settings, $post ) {
 		if ( empty( $post ) ) {
-			return $allowed_block_types;
+			return $editor_settings;
 		}
 
 		return array(
@@ -77,26 +78,58 @@ class Tests_Blocks_Editor extends WP_UnitTestCase {
 	/**
 	 * @ticket 52920
 	 */
-	function test_block_editor_context_no_settings() {
+	public function test_block_editor_context_no_settings() {
 		$context = new WP_Block_Editor_Context();
 
+		$this->assertSame( 'core/edit-post', $context->name );
 		$this->assertNull( $context->post );
 	}
 
 	/**
 	 * @ticket 52920
 	 */
-	function test_block_editor_context_post() {
+	public function test_block_editor_context_post() {
 		$context = new WP_Block_Editor_Context( array( 'post' => get_post() ) );
 
+		$this->assertSame( 'core/edit-post', $context->name );
 		$this->assertSame( get_post(), $context->post );
+	}
+
+	/**
+	 * @ticket 55301
+	 */
+	public function test_block_editor_context_widgets() {
+		$context = new WP_Block_Editor_Context( array( 'name' => 'core/edit-widgets' ) );
+
+		$this->assertSame( 'core/edit-widgets', $context->name );
+		$this->assertNull( $context->post );
+	}
+
+	/**
+	 * @ticket 55301
+	 */
+	public function test_block_editor_context_widgets_customizer() {
+		$context = new WP_Block_Editor_Context( array( 'name' => 'core/customize-widgets' ) );
+
+		$this->assertSame( 'core/customize-widgets', $context->name );
+		$this->assertNull( $context->post );
+	}
+
+	/**
+	 * @ticket 55301
+	 */
+	public function test_block_editor_context_site() {
+		$context = new WP_Block_Editor_Context( array( 'name' => 'core/edit-site' ) );
+
+		$this->assertSame( 'core/edit-site', $context->name );
+		$this->assertNull( $context->post );
 	}
 
 	/**
 	 * @ticket 52920
 	 * @expectedDeprecated block_categories
 	 */
-	function test_get_block_categories_deprecated_filter_post_object() {
+	public function test_get_block_categories_deprecated_filter_post_object() {
 		add_filter( 'block_categories', array( $this, 'filter_set_block_categories_post' ), 10, 2 );
 
 		$block_categories = get_block_categories( get_post() );
@@ -119,7 +152,7 @@ class Tests_Blocks_Editor extends WP_UnitTestCase {
 	 * @ticket 52920
 	 * @expectedDeprecated block_categories
 	 */
-	function test_get_block_categories_deprecated_filter_post_editor() {
+	public function test_get_block_categories_deprecated_filter_post_editor() {
 		add_filter( 'block_categories', array( $this, 'filter_set_block_categories_post' ), 10, 2 );
 
 		$post_editor_context = new WP_Block_Editor_Context( array( 'post' => get_post() ) );
@@ -142,7 +175,7 @@ class Tests_Blocks_Editor extends WP_UnitTestCase {
 	/**
 	 * @ticket 52920
 	 */
-	function test_get_allowed_block_types_default() {
+	public function test_get_allowed_block_types_default() {
 		$post_editor_context = new WP_Block_Editor_Context( array( 'post' => get_post() ) );
 		$allowed_block_types = get_allowed_block_types( $post_editor_context );
 
@@ -153,7 +186,7 @@ class Tests_Blocks_Editor extends WP_UnitTestCase {
 	 * @ticket 52920
 	 * @expectedDeprecated allowed_block_types
 	 */
-	function test_get_allowed_block_types_deprecated_filter_post_editor() {
+	public function test_get_allowed_block_types_deprecated_filter_post_editor() {
 		add_filter( 'allowed_block_types', array( $this, 'filter_set_allowed_block_types_post' ), 10, 2 );
 
 		$post_editor_context = new WP_Block_Editor_Context( array( 'post' => get_post() ) );
@@ -167,10 +200,10 @@ class Tests_Blocks_Editor extends WP_UnitTestCase {
 	/**
 	 * @ticket 52920
 	 */
-	function test_get_default_block_editor_settings() {
+	public function test_get_default_block_editor_settings() {
 		$settings = get_default_block_editor_settings();
 
-		$this->assertCount( 16, $settings );
+		$this->assertCount( 19, $settings );
 		$this->assertFalse( $settings['alignWide'] );
 		$this->assertIsArray( $settings['allowedMimeTypes'] );
 		$this->assertTrue( $settings['allowedBlockTypes'] );
@@ -208,7 +241,7 @@ class Tests_Blocks_Editor extends WP_UnitTestCase {
 				),
 				array(
 					'slug'  => 'reusable',
-					'title' => 'Reusable Blocks',
+					'title' => 'Patterns',
 					'icon'  => null,
 				),
 			),
@@ -217,6 +250,7 @@ class Tests_Blocks_Editor extends WP_UnitTestCase {
 		$this->assertFalse( $settings['disableCustomColors'] );
 		$this->assertFalse( $settings['disableCustomFontSizes'] );
 		$this->assertFalse( $settings['disableCustomGradients'] );
+		$this->assertFalse( $settings['disableLayoutStyles'] );
 		$this->assertFalse( $settings['enableCustomLineHeight'] );
 		$this->assertFalse( $settings['enableCustomSpacing'] );
 		$this->assertFalse( $settings['enableCustomUnits'] );
@@ -265,12 +299,38 @@ class Tests_Blocks_Editor extends WP_UnitTestCase {
 			$settings['imageSizes']
 		);
 		$this->assertIsInt( $settings['maxUploadFileSize'] );
+		$this->assertTrue( $settings['__unstableGalleryWithImageBlocks'] );
+	}
+
+	/**
+	 * @ticket 56815
+	 */
+	public function test_get_default_block_editor_settings_max_upload_file_size() {
+		// Force the return value of wp_max_upload_size() to be 500.
+		add_filter(
+			'upload_size_limit',
+			static function () {
+				return 500;
+			}
+		);
+
+		// Expect 0 when user is not allowed to upload (as wp_max_upload_size() should not be called).
+		$settings = get_default_block_editor_settings();
+		$this->assertSame( 0, $settings['maxUploadFileSize'] );
+
+		// Set up an administrator, as they can upload files.
+		$administrator = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $administrator );
+
+		// Expect the above 500 as the user is now allowed to upload.
+		$settings = get_default_block_editor_settings();
+		$this->assertSame( 500, $settings['maxUploadFileSize'] );
 	}
 
 	/**
 	 * @ticket 53397
 	 */
-	function test_get_legacy_widget_block_editor_settings() {
+	public function test_get_legacy_widget_block_editor_settings() {
 		$settings = get_legacy_widget_block_editor_settings();
 		$this->assertCount( 1, $settings );
 		$this->assertSameSets(
@@ -299,7 +359,7 @@ class Tests_Blocks_Editor extends WP_UnitTestCase {
 	/**
 	 * @ticket 52920
 	 */
-	function test_get_block_editor_settings_overrides_default_settings_all_editors() {
+	public function test_get_block_editor_settings_overrides_default_settings_all_editors() {
 		function filter_allowed_block_types_my_editor() {
 			return array( 'test/filtered-my-block' );
 		}
@@ -344,9 +404,68 @@ class Tests_Blocks_Editor extends WP_UnitTestCase {
 	}
 
 	/**
+	 * @ticket 58534
+	 */
+	public function test_wp_get_first_block() {
+		$block_name               = 'core/paragraph';
+		$blocks                   = array(
+			array(
+				'blockName' => 'core/image',
+			),
+			array(
+				'blockName' => $block_name,
+				'attrs'     => array(
+					'content' => 'Hello World!',
+				),
+			),
+			array(
+				'blockName' => 'core/heading',
+			),
+			array(
+				'blockName' => $block_name,
+			),
+		);
+		$blocks_with_no_paragraph = array(
+			array(
+				'blockName' => 'core/image',
+			),
+			array(
+				'blockName' => 'core/heading',
+			),
+		);
+
+		$this->assertSame( $blocks[1], wp_get_first_block( $blocks, $block_name ) );
+
+		$this->assertSame( array(), wp_get_first_block( $blocks_with_no_paragraph, $block_name ) );
+	}
+
+	/**
+	 * @ticket 58534
+	 */
+	public function test_wp_get_post_content_block_attributes() {
+		$attributes_with_layout = array(
+			'layout' => array(
+				'type' => 'constrained',
+			),
+		);
+		// With no block theme, expect null.
+		$this->assertNull( wp_get_post_content_block_attributes() );
+
+		switch_theme( 'block-theme' );
+
+		$this->assertSame( $attributes_with_layout, wp_get_post_content_block_attributes() );
+	}
+
+	public function test_wp_get_post_content_block_attributes_no_layout() {
+		switch_theme( 'block-theme-post-content-default' );
+
+		$this->assertSame( array(), wp_get_post_content_block_attributes() );
+	}
+
+	/**
 	 * @ticket 53458
 	 */
-	function test_get_block_editor_settings_theme_json_settings() {
+	public function test_get_block_editor_settings_theme_json_settings() {
 		switch_theme( 'block-theme' );
 
 		$post_editor_context = new WP_Block_Editor_Context( array( 'post' => get_post() ) );
@@ -403,15 +522,36 @@ class Tests_Blocks_Editor extends WP_UnitTestCase {
 		$this->assertSameSets( array( 'rem' ), $settings['enableCustomUnits'] );
 		// settings.spacing.customPadding
 		$this->assertTrue( $settings['enableCustomSpacing'] );
+		// settings.postContentAttributes
+		$this->assertSameSets(
+			array(
+				'layout' => array(
+					'type' => 'constrained',
+				),
+			),
+			$settings['postContentAttributes']
+		);
 
 		switch_theme( WP_DEFAULT_THEME );
+	}
+
+	/**
+	 * @ticket 59358
+	 */
+	public function test_get_block_editor_settings_without_post_content_block() {
+
+		$post_editor_context = new WP_Block_Editor_Context( array( 'post' => get_post() ) );
+
+		$settings = get_block_editor_settings( array(), $post_editor_context );
+
+		$this->assertArrayNotHasKey( 'postContentAttributes', $settings );
 	}
 
 	/**
 	 * @ticket 52920
 	 * @expectedDeprecated block_editor_settings
 	 */
-	function test_get_block_editor_settings_deprecated_filter_post_editor() {
+	public function test_get_block_editor_settings_deprecated_filter_post_editor() {
 		add_filter( 'block_editor_settings', array( $this, 'filter_set_block_editor_settings_post' ), 10, 2 );
 
 		$post_editor_context = new WP_Block_Editor_Context( array( 'post' => get_post() ) );
@@ -430,7 +570,7 @@ class Tests_Blocks_Editor extends WP_UnitTestCase {
 	/**
 	 * @ticket 52920
 	 */
-	function test_block_editor_rest_api_preload_no_paths() {
+	public function test_block_editor_rest_api_preload_no_paths() {
 		$editor_context = new WP_Block_Editor_Context();
 		block_editor_rest_api_preload( array(), $editor_context );
 
@@ -442,7 +582,7 @@ class Tests_Blocks_Editor extends WP_UnitTestCase {
 	 * @ticket 52920
 	 * @expectedDeprecated block_editor_preload_paths
 	 */
-	function test_block_editor_rest_api_preload_deprecated_filter_post_editor() {
+	public function test_block_editor_rest_api_preload_deprecated_filter_post_editor() {
 		function filter_remove_preload_paths( $preload_paths, $post ) {
 			if ( empty( $post ) ) {
 				return $preload_paths;
@@ -468,7 +608,7 @@ class Tests_Blocks_Editor extends WP_UnitTestCase {
 	/**
 	 * @ticket 52920
 	 */
-	function test_block_editor_rest_api_preload_filter_all() {
+	public function test_block_editor_rest_api_preload_filter_all() {
 		function filter_add_preload_paths( $preload_paths, WP_Block_Editor_Context $context ) {
 			if ( empty( $context->post ) ) {
 				array_push( $preload_paths, array( '/wp/v2/types', 'OPTIONS' ) );
@@ -495,17 +635,89 @@ class Tests_Blocks_Editor extends WP_UnitTestCase {
 	}
 
 	/**
-	 * @ticket 53344
+	 * @ticket 54558
+	 * @dataProvider data_block_editor_rest_api_preload_adds_missing_leading_slash
+	 *
+	 * @covers ::block_editor_rest_api_preload
+	 *
+	 * @param array  $preload_paths The paths to preload.
+	 * @param string $expected      The expected substring.
 	 */
-	function test_get_block_editor_theme_styles() {
-		$theme_styles = get_block_editor_theme_styles();
-		$this->assertCount( 1, $theme_styles );
-		$this->assertSameSets(
+	public function test_block_editor_rest_api_preload_adds_missing_leading_slash( array $preload_paths, $expected ) {
+		block_editor_rest_api_preload( $preload_paths, new WP_Block_Editor_Context() );
+		$haystack = implode( '', wp_scripts()->registered['wp-api-fetch']->extra['after'] );
+		$this->assertStringContainsString( $expected, $haystack );
+	}
+
+	/**
+	 * @ticket 57547
+	 *
+	 * @covers ::get_classic_theme_supports_block_editor_settings
+	 */
+	public function test_get_classic_theme_supports_block_editor_settings() {
+		$font_sizes = array(
 			array(
-				'css'            => 'body { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif }',
-				'__unstableType' => 'core',
+				'name' => 'Small',
+				'size' => 12,
+				'slug' => 'small',
 			),
-			$theme_styles[0]
+			array(
+				'name' => 'Regular',
+				'size' => 16,
+				'slug' => 'regular',
+			),
+		);
+
+		add_theme_support( 'editor-font-sizes', $font_sizes );
+		$settings = get_classic_theme_supports_block_editor_settings();
+		remove_theme_support( 'editor-font-sizes' );
+
+		$this->assertFalse( $settings['disableCustomColors'], 'Value for array key "disableCustomColors" does not match expectations' );
+		$this->assertFalse( $settings['disableCustomFontSizes'], 'Value for array key "disableCustomFontSizes" does not match expectations' );
+		$this->assertFalse( $settings['disableCustomGradients'], 'Value for array key "disableCustomGradients" does not match expectations' );
+		$this->assertFalse( $settings['disableLayoutStyles'], 'Value for array key "disableLayoutStyles" does not match expectations' );
+		$this->assertFalse( $settings['enableCustomLineHeight'], 'Value for array key "enableCustomLineHeight" does not match expectations' );
+		$this->assertFalse( $settings['enableCustomSpacing'], 'Value for array key "enableCustomSpacing" does not match expectations' );
+		$this->assertFalse( $settings['enableCustomUnits'], 'Value for array key "enableCustomUnits" does not match expectations' );
+
+		$this->assertSame(
+			$font_sizes,
+			$settings['fontSizes'],
+			'Value for array key "fontSizes" does not match expectations'
+		);
+	}
+
+	/**
+	 * Data provider.
+	 *
+	 * @return array
+	 */
+	public function data_block_editor_rest_api_preload_adds_missing_leading_slash() {
+		return array(
+			'a string without a slash'               => array(
+				'preload_paths' => array( 'wp/v2/blocks' ),
+				'expected'      => '\/wp\/v2\/blocks',
+			),
+			'a string with a slash'                  => array(
+				'preload_paths' => array( '/wp/v2/blocks' ),
+				'expected'      => '\/wp\/v2\/blocks',
+			),
+			'a string starting with a question mark' => array(
+				'preload_paths' => array( '?context=edit' ),
+				'expected'      => '/?context=edit',
+			),
+			'an array with a string without a slash' => array(
+				'preload_paths' => array( array( 'wp/v2/blocks', 'OPTIONS' ) ),
+				'expected'      => '\/wp\/v2\/blocks',
+			),
+			'an array with a string with a slash'    => array(
+				'preload_paths' => array( array( '/wp/v2/blocks', 'OPTIONS' ) ),
+				'expected'      => '\/wp\/v2\/blocks',
+			),
+			'an array with a string starting with a question mark' => array(
+				'preload_paths' => array( array( '?context=edit', 'OPTIONS' ) ),
+				'expected'      => '\/?context=edit',
+			),
 		);
 	}
 }

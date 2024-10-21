@@ -33,7 +33,7 @@ class Tests_Query_SetupPostdata extends WP_UnitTestCase {
 	 * @ticket 30970
 	 */
 	public function test_setup_by_fake_post() {
-		$fake     = new stdClass;
+		$fake     = new stdClass();
 		$fake->ID = 98765;
 		setup_postdata( $fake->ID );
 
@@ -387,7 +387,7 @@ class Tests_Query_SetupPostdata extends WP_UnitTestCase {
 	 * setup_postdata( $a_post ) followed by the_content() without updating global $post
 	 * should use the content of $a_post rather then the global post.
 	 */
-	function test_setup_postdata_with_the_content() {
+	public function test_setup_postdata_with_the_content() {
 		$post_id                   = self::factory()->post->create( array( 'post_content' => 'global post' ) );
 		$GLOBALS['post']           = get_post( $post_id );
 		$GLOBALS['wp_query']->post = $GLOBALS['post'];

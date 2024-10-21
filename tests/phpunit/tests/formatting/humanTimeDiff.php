@@ -3,21 +3,23 @@
 /**
  * @group formatting
  * @ticket 38773
+ *
+ * @covers ::human_time_diff
  */
 class Tests_Formatting_HumanTimeDiff extends WP_UnitTestCase {
 
 	/**
 	 * @group formatting
 	 * @ticket 38773
-	 * @dataProvider data_test_human_time_diff
+	 * @dataProvider data_human_time_diff
 	 */
-	function test_human_time_diff( $expected, $stopdate, $message ) {
+	public function test_human_time_diff( $expected, $stopdate, $message ) {
 		$startdate = new DateTime( '2016-01-01 12:00:00' );
 		$this->assertSame( $expected, human_time_diff( $startdate->format( 'U' ), $stopdate->format( 'U' ) ), $message );
 	}
 
 	// Data for test_human_time_diff.
-	function data_test_human_time_diff() {
+	public function data_human_time_diff() {
 		return array(
 			array(
 				'37 seconds',
@@ -25,7 +27,7 @@ class Tests_Formatting_HumanTimeDiff extends WP_UnitTestCase {
 				'Test a difference of 37 seconds.',
 			),
 			array(
-				'5 mins',
+				'5 minutes',
 				new DateTime( '2016-01-01 12:05:00' ),
 				'Test a difference of 5 minutes.',
 			),

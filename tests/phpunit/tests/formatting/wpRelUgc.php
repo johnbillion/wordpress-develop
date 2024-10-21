@@ -2,6 +2,8 @@
 
 /**
  * @group formatting
+ *
+ * @covers ::wp_rel_ugc
  */
 class Tests_Formatting_wpRelUgc extends WP_UnitTestCase {
 
@@ -27,8 +29,8 @@ class Tests_Formatting_wpRelUgc extends WP_UnitTestCase {
 	 * @ticket 48022
 	 * @dataProvider data_wp_rel_ugc
 	 */
-	public function test_wp_rel_ugc( $input, $output ) {
-		return $this->assertSame( wp_slash( $output ), wp_rel_ugc( $input ) );
+	public function test_wp_rel_ugc( $input, $output, $expect_deprecation = false ) {
+		$this->assertSame( wp_slash( $output ), wp_rel_ugc( $input ) );
 	}
 
 	public function data_wp_rel_ugc() {
@@ -39,6 +41,7 @@ class Tests_Formatting_wpRelUgc extends WP_UnitTestCase {
 			array(
 				'<a href="">Double Quotes</a>',
 				'<a href="" rel="nofollow ugc">Double Quotes</a>',
+				true,
 			),
 			array(
 				'<a href="https://wordpress.org">Double Quotes</a>',
@@ -66,16 +69,17 @@ class Tests_Formatting_wpRelUgc extends WP_UnitTestCase {
 			),
 			array(
 				'<a href="' . $home_url_http . '/some-url">Home URL (http)</a>',
-				'<a href="' . $home_url_http . '/some-url">Home URL (http)</a>',
+				'<a href="' . $home_url_http . '/some-url" rel="ugc">Home URL (http)</a>',
 			),
 			array(
 				'<a href="' . $home_url_https . '/some-url">Home URL (https)</a>',
-				'<a href="' . $home_url_https . '/some-url">Home URL (https)</a>',
+				'<a href="' . $home_url_https . '/some-url" rel="ugc">Home URL (https)</a>',
 			),
 		);
 	}
 
 	public function test_append_ugc_with_valueless_attribute() {
+
 		$content  = '<p>This is some cool <a href="demo.com" download rel="hola">Code</a></p>';
 		$expected = '<p>This is some cool <a href=\"demo.com\" download rel=\"hola nofollow ugc\">Code</a></p>';
 		$this->assertSame( $expected, wp_rel_ugc( $content ) );

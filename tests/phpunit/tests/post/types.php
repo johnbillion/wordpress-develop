@@ -18,13 +18,13 @@ class Tests_Post_Types extends WP_UnitTestCase {
 	 *
 	 * @since 4.5.0
 	 */
-	function set_up() {
+	public function set_up() {
 		parent::set_up();
 
-		$this->post_type = rand_str( 20 );
+		$this->post_type = 'foo1';
 	}
 
-	function test_register_post_type() {
+	public function test_register_post_type() {
 		$this->assertNull( get_post_type_object( 'foo' ) );
 		register_post_type( 'foo' );
 
@@ -42,7 +42,7 @@ class Tests_Post_Types extends WP_UnitTestCase {
 	/**
 	 * @ticket 48558
 	 */
-	function test_register_post_type_return_value() {
+	public function test_register_post_type_return_value() {
 		$this->assertInstanceOf( 'WP_Post_Type', register_post_type( 'foo' ) );
 	}
 
@@ -51,7 +51,7 @@ class Tests_Post_Types extends WP_UnitTestCase {
 	 *
 	 * @expectedIncorrectUsage register_post_type
 	 */
-	function test_register_post_type_with_too_long_name() {
+	public function test_register_post_type_with_too_long_name() {
 		// Post type too long.
 		$this->assertInstanceOf( 'WP_Error', register_post_type( 'abcdefghijklmnopqrstuvwxyz0123456789' ) );
 	}
@@ -61,7 +61,7 @@ class Tests_Post_Types extends WP_UnitTestCase {
 	 *
 	 * @expectedIncorrectUsage register_post_type
 	 */
-	function test_register_post_type_with_empty_name() {
+	public function test_register_post_type_with_empty_name() {
 		// Post type too short.
 		$this->assertInstanceOf( 'WP_Error', register_post_type( '' ) );
 	}
@@ -70,7 +70,7 @@ class Tests_Post_Types extends WP_UnitTestCase {
 	 * @ticket 35985
 	 * @covers ::register_post_type
 	 */
-	function test_register_post_type_exclude_from_search_should_default_to_opposite_value_of_public() {
+	public function test_register_post_type_exclude_from_search_should_default_to_opposite_value_of_public() {
 		/*
 		 * 'public'              Default is false
 		 * 'exclude_from_search' Default is null (opposite 'public')
@@ -84,7 +84,7 @@ class Tests_Post_Types extends WP_UnitTestCase {
 	 * @ticket 35985
 	 * @covers ::register_post_type
 	 */
-	function test_register_post_type_publicly_queryable_should_default_to_value_of_public() {
+	public function test_register_post_type_publicly_queryable_should_default_to_value_of_public() {
 		/*
 		 * 'public'             Default is false
 		 * 'publicly_queryable' Default is null ('public')
@@ -98,7 +98,7 @@ class Tests_Post_Types extends WP_UnitTestCase {
 	 * @ticket 35985
 	 * @covers ::register_post_type
 	 */
-	function test_register_post_type_show_ui_should_default_to_value_of_public() {
+	public function test_register_post_type_show_ui_should_default_to_value_of_public() {
 		/*
 		 * 'public'  Default is false
 		 * 'show_ui' Default is null ('public')
@@ -112,7 +112,7 @@ class Tests_Post_Types extends WP_UnitTestCase {
 	 * @ticket 35985
 	 * @covers ::register_post_type
 	 */
-	function test_register_post_type_show_in_menu_should_default_to_value_of_show_ui() {
+	public function test_register_post_type_show_in_menu_should_default_to_value_of_show_ui() {
 		/*
 		 * 'public'      Default is false
 		 * 'show_ui'     Default is null ('public')
@@ -131,7 +131,7 @@ class Tests_Post_Types extends WP_UnitTestCase {
 	 * @ticket 35985
 	 * @covers ::register_post_type
 	 */
-	function test_register_post_type_show_in_nav_menus_should_default_to_value_of_public() {
+	public function test_register_post_type_show_in_nav_menus_should_default_to_value_of_public() {
 		/*
 		 * 'public'            Default is false
 		 * 'show_in_nav_menus' Default is null ('public')
@@ -145,7 +145,7 @@ class Tests_Post_Types extends WP_UnitTestCase {
 	 * @ticket 35985
 	 * @covers ::register_post_type
 	 */
-	function test_register_post_type_show_in_admin_bar_should_default_to_value_of_show_in_menu() {
+	public function test_register_post_type_show_in_admin_bar_should_default_to_value_of_show_in_menu() {
 		/*
 		 * 'public'            Default is false
 		 * 'show_in_menu'      Default is null ('show_ui' > 'public')
@@ -163,7 +163,24 @@ class Tests_Post_Types extends WP_UnitTestCase {
 		$this->assertSame( $public, $args->show_in_admin_bar );
 	}
 
-	function test_register_taxonomy_for_object_type() {
+	/**
+	 * @ticket 53212
+	 * @covers ::register_post_type
+	 */
+	public function test_fires_registered_post_type_actions() {
+		$post_type = 'cpt';
+		$action    = new MockAction();
+
+		add_action( 'registered_post_type', array( $action, 'action' ) );
+		add_action( "registered_post_type_{$post_type}", array( $action, 'action' ) );
+
+		register_post_type( $post_type );
+		register_post_type( $this->post_type );
+
+		$this->assertSame( 3, $action->get_call_count() );
+	}
+
+	public function test_register_taxonomy_for_object_type() {
 		global $wp_taxonomies;
 
 		register_post_type( 'bar' );
@@ -185,12 +202,12 @@ class Tests_Post_Types extends WP_UnitTestCase {
 		_unregister_post_type( 'bar' );
 	}
 
-	function test_post_type_exists() {
+	public function test_post_type_exists() {
 		$this->assertFalse( post_type_exists( 'notaposttype' ) );
 		$this->assertTrue( post_type_exists( 'post' ) );
 	}
 
-	function test_post_type_supports() {
+	public function test_post_type_supports() {
 		$this->assertTrue( post_type_supports( 'post', 'post-formats' ) );
 		$this->assertFalse( post_type_supports( 'page', 'post-formats' ) );
 		$this->assertFalse( post_type_supports( 'notaposttype', 'post-formats' ) );
@@ -200,23 +217,26 @@ class Tests_Post_Types extends WP_UnitTestCase {
 
 	/**
 	 * @ticket 21586
+	 * @ticket 41172
 	 */
-	function test_post_type_with_no_support() {
+	public function test_post_type_with_no_support() {
 		register_post_type( 'foo', array( 'supports' => array() ) );
-		$this->assertTrue( post_type_supports( 'foo', 'editor' ) );
-		$this->assertTrue( post_type_supports( 'foo', 'title' ) );
+		$this->assertTrue( post_type_supports( 'foo', 'editor' ), 'Editor support should be enabled by default.' );
+		$this->assertTrue( post_type_supports( 'foo', 'title' ), 'Title support should be enabled by default.' );
+		$this->assertTrue( post_type_supports( 'foo', 'autosave' ), 'Autosaves support should be enabled by default.' );
 		_unregister_post_type( 'foo' );
 
 		register_post_type( 'foo', array( 'supports' => false ) );
-		$this->assertFalse( post_type_supports( 'foo', 'editor' ) );
-		$this->assertFalse( post_type_supports( 'foo', 'title' ) );
+		$this->assertFalse( post_type_supports( 'foo', 'editor' ), 'Editor support should be disabled.' );
+		$this->assertFalse( post_type_supports( 'foo', 'title' ), 'Title support should be disabled.' );
+		$this->assertFalse( post_type_supports( 'foo', 'autosave' ), 'Autosaves support should be disabled.' );
 		_unregister_post_type( 'foo' );
 	}
 
 	/**
 	 * @ticket 23302
 	 */
-	function test_post_type_with_no_feed() {
+	public function test_post_type_with_no_feed() {
 		global $wp_rewrite;
 		$old_permastruct = get_option( 'permalink_structure' );
 		update_option( 'permalink_structure', '%postname%' );
@@ -239,7 +259,7 @@ class Tests_Post_Types extends WP_UnitTestCase {
 		$this->assertNotNull( get_post_type_object( 'foo' ) );
 		$this->assertNull( get_post_type_object( array() ) );
 		$this->assertNull( get_post_type_object( array( 'foo' ) ) );
-		$this->assertNull( get_post_type_object( new stdClass ) );
+		$this->assertNull( get_post_type_object( new stdClass() ) );
 
 		_unregister_post_type( 'foo' );
 
@@ -415,9 +435,10 @@ class Tests_Post_Types extends WP_UnitTestCase {
 
 		$this->assertSameSetsWithIndex(
 			array(
-				'editor' => true,
-				'author' => true,
-				'title'  => true,
+				'editor'   => true,
+				'author'   => true,
+				'title'    => true,
+				'autosave' => true,
 			),
 			$_wp_post_type_features['foo']
 		);
@@ -569,7 +590,60 @@ class Tests_Post_Types extends WP_UnitTestCase {
 	/**
 	 * @ticket 34010
 	 */
-	public function test_get_post_types_by_support_non_existant_feature() {
+	public function test_get_post_types_by_support_non_existent_feature() {
 		$this->assertSameSets( array(), get_post_types_by_support( 'somefeature' ) );
+	}
+
+	/**
+	 * @ticket 41172
+	 */
+	public function test_post_type_supports_autosave_based_on_editor_support() {
+		$this->assertFalse( post_type_supports( 'attachment', 'autosave' ) );
+
+		register_post_type( 'foo', array( 'supports' => array( 'editor' ) ) );
+		$this->assertTrue( post_type_supports( 'foo', 'autosave' ) );
+		_unregister_post_type( 'foo' );
+
+		register_post_type( 'foo', array( 'supports' => array( 'title' ) ) );
+		$this->assertFalse( post_type_supports( 'foo', 'autosave' ) );
+		_unregister_post_type( 'foo' );
+	}
+
+	/**
+	 * @ticket 41172
+	 */
+	public function test_removing_autosave_support_removes_rest_api_controller() {
+		register_post_type(
+			'foo',
+			array(
+				'show_in_rest' => true,
+				'supports'     => array( 'editor' ),
+			)
+		);
+
+		$post_type_object = get_post_type_object( 'foo' );
+		$this->assertInstanceOf( 'WP_REST_Autosaves_Controller', $post_type_object->get_autosave_rest_controller(), 'Autosave controller should be set by default.' );
+
+		remove_post_type_support( 'foo', 'autosave' );
+		$post_type_object = get_post_type_object( 'foo' );
+		$this->assertSame( null, $post_type_object->get_autosave_rest_controller(), 'Autosave controller should be removed.' );
+		_unregister_post_type( 'foo' );
+	}
+
+	/**
+	 * @ticket 41172
+	 */
+	public function test_removing_editor_support_does_not_remove_autosave_support() {
+		register_post_type(
+			'foo',
+			array(
+				'show_in_rest' => true,
+				'supports'     => array( 'editor' ),
+			)
+		);
+		remove_post_type_support( 'foo', 'editor' );
+
+		$this->assertFalse( post_type_supports( 'foo', 'editor' ), 'Post type should not support editor.' );
+		$this->assertTrue( post_type_supports( 'foo', 'autosave' ), 'Post type should still support autosaves.' );
 	}
 }

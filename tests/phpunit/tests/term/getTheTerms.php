@@ -14,7 +14,7 @@ class Tests_Term_GetTheTerms extends WP_UnitTestCase {
 	/**
 	 * @ticket 22560
 	 */
-	function test_object_term_cache() {
+	public function test_object_term_cache() {
 		$post_id = self::$post_ids[0];
 
 		$terms_1 = array( 'foo', 'bar', 'baz' );
@@ -50,7 +50,7 @@ class Tests_Term_GetTheTerms extends WP_UnitTestCase {
 	/**
 	 * @ticket 24189
 	 */
-	function test_object_term_cache_when_term_changes() {
+	public function test_object_term_cache_when_term_changes() {
 		$post_id = self::$post_ids[0];
 		$tag_id  = self::factory()->tag->create(
 			array(
@@ -168,7 +168,7 @@ class Tests_Term_GetTheTerms extends WP_UnitTestCase {
 	/**
 	 * @ticket 34723
 	 */
-	function test_get_the_terms_should_return_wp_error_when_taxonomy_is_unregistered() {
+	public function test_get_the_terms_should_return_wp_error_when_taxonomy_is_unregistered() {
 		$p     = self::$post_ids[0];
 		$terms = get_the_terms( $p, 'this-taxonomy-does-not-exist' );
 		$this->assertWPError( $terms );
@@ -195,10 +195,9 @@ class Tests_Term_GetTheTerms extends WP_UnitTestCase {
 
 	/**
 	 * @ticket 36814
+	 * @ticket 57701
 	 */
-	public function test_uncached_terms_should_be_primed_with_a_single_query() {
-		global $wpdb;
-
+	public function test_uncached_terms_should_not_be_primed_with_a_single_query_by_default() {
 		register_taxonomy( 'wptests_tax', 'post' );
 
 		$terms = self::factory()->term->create_many( 3, array( 'taxonomy' => 'wptests_tax' ) );
@@ -210,14 +209,13 @@ class Tests_Term_GetTheTerms extends WP_UnitTestCase {
 		// Clean cache for two of the terms.
 		clean_term_cache( array( $terms[0], $terms[1] ), 'wptests_tax', false );
 
-		$num_queries = $wpdb->num_queries;
+		$num_queries = get_num_queries();
 		$found       = get_the_terms( self::$post_ids[0], 'wptests_tax' );
 
 		$this->assertSameSets( $terms, wp_list_pluck( $found, 'term_id' ) );
 
-		$num_queries++;
-		$this->assertSame( $num_queries, $wpdb->num_queries );
-
+		// Two extra queries are expected as the cache is not primed and hence terms need to be queried.
+		$this->assertSame( 1, get_num_queries() - $num_queries );
 	}
 
 	/**

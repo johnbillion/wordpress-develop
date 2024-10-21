@@ -113,7 +113,7 @@ class WP_REST_Post_Statuses_Controller extends WP_REST_Controller {
 		$statuses          = get_post_stati( array( 'internal' => false ), 'object' );
 		$statuses['trash'] = get_post_status_object( 'trash' );
 
-		foreach ( $statuses as $slug => $obj ) {
+		foreach ( $statuses as $obj ) {
 			$ret = $this->check_read_permission( $obj );
 
 			if ( ! $ret ) {
@@ -222,6 +222,7 @@ class WP_REST_Post_Statuses_Controller extends WP_REST_Controller {
 	public function prepare_item_for_response( $item, $request ) {
 		// Restores the more descriptive, specific name for use within this method.
 		$status = $item;
+
 		$fields = $this->get_fields_for_response( $request );
 		$data   = array();
 
@@ -263,10 +264,11 @@ class WP_REST_Post_Statuses_Controller extends WP_REST_Controller {
 
 		$response = rest_ensure_response( $data );
 
+		$rest_url = rest_url( rest_get_route_for_post_type_items( 'post' ) );
 		if ( 'publish' === $status->name ) {
-			$response->add_link( 'archives', rest_url( 'wp/v2/posts' ) );
+			$response->add_link( 'archives', $rest_url );
 		} else {
-			$response->add_link( 'archives', add_query_arg( 'status', $status->name, rest_url( 'wp/v2/posts' ) ) );
+			$response->add_link( 'archives', add_query_arg( 'status', $status->name, $rest_url ) );
 		}
 
 		/**
@@ -368,5 +370,4 @@ class WP_REST_Post_Statuses_Controller extends WP_REST_Controller {
 			'context' => $this->get_context_param( array( 'default' => 'view' ) ),
 		);
 	}
-
 }
