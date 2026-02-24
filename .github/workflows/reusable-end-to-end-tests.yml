@@ -57,6 +57,7 @@ jobs:
   # - Logs the running Docker containers.
   # - Logs Docker debug information (about both the Docker installation within the runner and the WordPress container).
   # - Install WordPress within the Docker container.
+  # - Update permalink structure.
   # - Install Gutenberg.
   # - Install additional languages.
   # - Run the E2E tests.
@@ -125,6 +126,9 @@ jobs:
         env:
           LOCAL_SCRIPT_DEBUG: ${{ inputs.LOCAL_SCRIPT_DEBUG }}
         run: npm run env:install
+
+      - name: Update permalink structure
+        run: npm run env:cli -- rewrite structure '/%year%/%monthnum%/%day%/%postname%/' --path="/var/www/${LOCAL_DIR}"
 
       - name: Install Gutenberg
         if: ${{ inputs.install-gutenberg }}
