@@ -8,16 +8,16 @@ For more information, please review the relevant Core Handbook pages:
 
 ## Configuration Files
 
-WordPress core maintains separate configuration files to support both PHPUnit 9 and PHPUnit 10.1+:
+WordPress core has separate configuration files for PHPUnit 9 and PHPUnit 10:
 
 - `phpunit.xml.dist` and `tests/phpunit/multisite.xml`: Used for PHPUnit 9 and earlier.
-- `phpunit10.xml.dist` and `tests/phpunit/multisite10.xml`: Used for PHPUnit 10.1 and later.
+- `phpunit10.xml.dist` and `tests/phpunit/multisite10.xml`: Used for PHPUnit 10 and later. These use the `<source>` element, so PHPUnit 10.0 is not supported.
 
 ### Running Tests Locally
 
 When running tests via Composer:
-- `composer test`: Runs tests using the default configuration (PHPUnit &lt; 10).
-- `composer test10`: Runs tests using `phpunit10.xml.dist` (PHPUnit 10+).
+- `composer test`: Runs tests using the default configuration (PHPUnit 9 and earlier).
+- `composer test10`: Runs tests using `phpunit10.xml.dist` (PHPUnit 10 and later).
 
 When running tests via npm and Docker:
 - `npm run test:php`: Runs tests using the default configuration.
