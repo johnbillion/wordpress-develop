@@ -10,7 +10,6 @@ wp-tests-config.php
 .phpunit.result.cache
 /phpunit.xml
 /phpunit10.xml
-/phpunit-10.xml
 /.phpcs.xml
 /phpcs.xml
 .cache/*
