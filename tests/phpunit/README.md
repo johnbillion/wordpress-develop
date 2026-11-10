@@ -15,13 +15,13 @@ WordPress core has separate configuration files for PHPUnit 9 and PHPUnit 10:
 
 ### Running Tests Locally
 
-When running tests via Composer:
-- `composer test`: Runs tests using the default configuration (PHPUnit 9 and earlier).
-- `composer test10`: Runs tests using `phpunit10.xml.dist` (PHPUnit 10 and later).
+`composer test` and `npm run test:php` use the single site configuration file that matches the installed version of PHPUnit. A local `phpunit.xml` file is used instead if one exists, so base it on the file that matches your version of PHPUnit.
 
-When running tests via npm and Docker:
-- `npm run test:php`: Runs tests using the default configuration.
-- `npm run test:php10`: Runs tests using `phpunit10.xml.dist`.
+`tests/phpunit/phpunit-config.php` prints the matching configuration file. Pass it either configuration file name to get the one for the installed version, for example to run the multisite tests:
+
+```
+./vendor/bin/phpunit -c "$(php tests/phpunit/phpunit-config.php tests/phpunit/multisite.xml)"
+```
 
 ## Run the full matrix on a pull request
 

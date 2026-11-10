@@ -247,20 +247,10 @@ jobs:
         with:
           custom-cache-suffix: $(/bin/date -u --date='last Mon' "+%F")
 
-      # The runner's PHP version matches the container's, so the PHPUnit version installed here is the one the tests use.
+      # Release branches run this workflow from trunk, but older branches lack this file.
       - name: Select PHPUnit configuration
-        run: |
-          PHPUNIT_VERSION=$(php -r 'require "vendor/autoload.php"; echo Composer\InstalledVersions::getVersion("phpunit/phpunit");')
-          echo "Detected PHPUnit version: ${PHPUNIT_VERSION}"
-          if [ "$(echo "${PHPUNIT_VERSION}" | cut -d. -f1)" -ge 10 ]; then
-            if [ "${PHPUNIT_CONFIG}" = "tests/phpunit/multisite.xml" ]; then
-              NEW_CONFIG="tests/phpunit/multisite10.xml"
-            else
-              NEW_CONFIG="phpunit10.xml.dist"
-            fi
-            echo "Using PHPUnit 10+ configuration: ${NEW_CONFIG}"
-            echo "PHPUNIT_CONFIG=${NEW_CONFIG}" >> "$GITHUB_ENV"
-          fi
+        if: ${{ hashFiles('tests/phpunit/phpunit-config.php') != '' }}
+        run: echo "PHPUNIT_CONFIG=$(php ./tests/phpunit/phpunit-config.php "${PHPUNIT_CONFIG}")" >> "$GITHUB_ENV"
 
       - name: Install npm dependencies
         run: npm ci
