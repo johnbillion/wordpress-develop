@@ -1033,13 +1033,14 @@ function _wp_filter_build_unique_id( $hook_name, $callback, $priority ): ?string
 		/*
 		 * Each `$object->method(...)` or Closure::fromCallable() call creates a new closure, so its object
 		 * ID can't be used to remove the callback again. A closure created from a named function or method
-		 * is identified like that function or method instead. Anonymous functions are named "{closure}"
-		 * (or "{closure:...}" since PHP 8.4) and keep their object ID below.
+		 * is identified like that function or method instead. Anonymous functions are named "{closure}",
+		 * prefixed with the namespace before PHP 8.4 or as "{closure:...}" since PHP 8.4, and keep their
+		 * object ID below.
 		 */
 		$function = new ReflectionFunction( $callback );
 		$name     = $function->getName();
 
-		if ( ! str_starts_with( $name, '{closure' ) ) {
+		if ( ! str_contains( $name, '{closure' ) ) {
 			$bound_object = $function->getClosureThis();
 			if ( null !== $bound_object ) {
 				// Same ID as the array( $object, 'method' ) form below.

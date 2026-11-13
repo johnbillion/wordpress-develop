@@ -187,6 +187,34 @@ class Tests_Hooks_BuildUniqueId extends WP_UnitTestCase {
 
 	/**
 	 * @ticket 59126
+	 */
+	public function test_anonymous_closures_in_namespace_get_different_ids(): void {
+		require_once DIR_TESTDATA . '/hooks/namespaced-closures.php';
+
+		list( $first, $second ) = \Tests\Hooks\BuildUniqueId\get_closures();
+
+		$this->assertNotSame(
+			_wp_filter_build_unique_id( '', $first, 10 ),
+			_wp_filter_build_unique_id( '', $second, 10 )
+		);
+	}
+
+	/**
+	 * @ticket 59126
+	 */
+	public function test_anonymous_closures_in_namespaced_method_get_different_ids(): void {
+		require_once DIR_TESTDATA . '/hooks/namespaced-closures.php';
+
+		list( $first, $second ) = ( new \Tests\Hooks\BuildUniqueId\Closure_Factory() )->get_closures();
+
+		$this->assertNotSame(
+			_wp_filter_build_unique_id( '', $first, 10 ),
+			_wp_filter_build_unique_id( '', $second, 10 )
+		);
+	}
+
+	/**
+	 * @ticket 59126
 	 *
 	 * @covers ::add_filter
 	 * @covers ::has_filter
